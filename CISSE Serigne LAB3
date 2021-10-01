@@ -1,0 +1,102 @@
+<Cisse Serigne Cheikh Modou Kara,HW3>
+Group Members: Kouakou Allah and Joel Andrade 
+LAB3 Econometrics
+</head>
+summary(acs2017_ny)
+attach(acs2017_ny)
+norm_varb <- function(X_in) {(X_in - mean(X_in, na.rm = TRUE))/sd(X_in, na.rm = TRUE)}  
+female <- as.factor(female)
+levels(female) <- c("male","female")
+summary(female)
+summary((female=1))
+summary(!female)
+detach(acs2017_ny)
+dat_NYC <- subset(acs2017_ny, (acs2017_ny$in_NYC == 1)&(acs2017_ny$AGE >20)&(acs2017_ny$AGE < 66))
+attach(dat_NYC)
+borough_f <- factor((in_Bronx + 2*in_Manhattan + 3*in_StatenI +
+                       4*in_Brooklyn + 5*in_Queens), levels=c(1,2,3,4,5),labels =
+                      c("Bronx","Manhattan","Staten Island","Brooklyn","Queens"))
+levels= c(1,2,3,4,5,), labels= c("Bronx", "Manhattan", "Staten Island", "Brooklyn"," Queens"))
+norm_varb <- function(X_in) {(X_in - mean(X_in, na.rm = TRUE))/sd(X_in, na.rm = TRUE)}  
+ 
+housing_cost <- OWNCOST + RENT
+norm_inc_tot <- norm_varb(INCTOT)
+norm_housing_cost <- norm_varb(housing_cost)
+data_use_prelim <- data.frame(norm_inc_tot,norm_housing_cost)
+good_obs_data_use <- complete.cases(data_use_prelim,borough_f)
+dat_use <- subset(data_use_prelim,good_obs_data_use)
+y_use <- subset(borough_f,good_obs_data_use)
+detach(dat_NYC)
+set.seed(12345)
+NN_obs <- sum(good_obs_data_use == 1)
+select1 <- (runif(NN_obs) < 0.8)
+train_data <- subset(dat_use,select1)
+test_data <- subset(dat_use,(!select1))
+cl_data <- y_use[select1]
+true_data <- y_use[!select1]
+summary(cl_data)
+summary(cl_data)
+        Bronx     Manhattan Staten Island      Brooklyn        Queens 
+         4880          5250          1891         12416         10923 
+> prop.table(summary(cl_data))
+        Bronx     Manhattan Staten Island      Brooklyn        Queens 
+   0.13800905    0.14847285    0.05347851    0.35113122    0.30890837 
+ 
+> summary(train_data)
+  norm_inc_tot       norm_housing_cost  
+ Min.   :-0.711603   Min.   :-1.254739  
+ 1st Qu.:-0.511527   1st Qu.:-1.201599  
+ Median :-0.259174   Median : 0.810897  
+ Mean   : 0.005006   Mean   : 0.002162  
+ 3rd Qu.: 0.165356   3rd Qu.: 0.829377  
+ Max.   :16.091311   Max.   : 0.876604  
+ 
+> require(class)
+Loading required package: class
+I downloaded “class” package along with oter packages such as  “splines” and “ggplot”
+package ‘class’ was built under R 
+> 
+> for (indx in seq(1, 9, by= 2)) {pred_borough <- knn(train_data, test_data, cl_data, k = indx, l = 0, prob = FALSE, use.all = TRUE)
+> num_correct_labels <- sum(pred_borough == true_data)
+> correct_rate <- num_correct_labels/length(true_data)
+> print(c(indx,correct_rate))}
+[1] 1.0000000 0.3517115
+[1] 3.0000000 0.3492993
+[1] 5.0000000 0.3611303
+[1] 7.0000000 0.3711234
+[1] 9.000000 0.368941
+We can definitely see that  the neighbor factors are interacting in the output with the dominance of label 7. As we’re focusing on level of income and if they rent or own their places. 
+ 
+ plot(train_data)
+
+#In the test group we can see a negative value demonstrating the relationship of the population housing cost and its level of income. This either showing that we failed to demonstrate their financial capabilities of owning their places. So it confirms my hypothesis that the majority can’t afford buying a place to live. 
+plot(test_data)
+
+  The test group is showing the same characteristic as the trained group. Only a very tiny number within this population would live in their owned place and is reflected by that single dot. 
+ 
+pairs(train_data)
+plot(cl_data)
+
+#The best practice was to normalize the data and finally run the k-nn algorithms and compare against the simple means. We can notice that income levels justify needs and confirm capabilities. Our sampled community cannot really afford living in owned places and seem to be more inclined to rent. As we can see in the last plots, higher concentrations of renters are reflected in the Bronx and Brooklyn. The simplicity of K-nn algorithms facilitates the understanding of relationships between income levels, borough, level of education. Our perception would be to guess that other factors could influence the data. However, better sampling could not be made to show these results.
+
+cl_data_n <- as.numeric(cl_data)
+model_ols1 <- lm(cl_data_n ~ train_data$norm_poverty + train_data$norm_inc_tot + train_data$norm_famsize + train_data$norm_migration + train_data$norm_rent + train_data$norm_cost_electricity + train_data$norm_cost_gas + train_data$norm_cost_water + train_data$norm_cost_fuelhome + train_data$norm_linguistic + train_data$norm_rooms)        
+y_hat <- fitted.values(model_ols1)
+mean(y_hat[cl_data_n == 1])
+mean(y_hat[cl_data_n == 2])
+mean(y_hat[cl_data_n == 3])
+mean(y_hat[cl_data_n == 4])
+mean(y_hat[cl_data_n == 5])
+cl_data_n1 <- as.numeric(cl_data_n == 1)
+model_ols_v1 <- lm(cl_data_n1 ~ train_data$norm_poverty + train_data$norm_inc_tot + train_data$norm_famsize + train_data$norm_migration + train_data$norm_rent + train_data$norm_cost_electricity + train_data$norm_cost_gas + train_data$norm_cost_water + train_data$norm_cost_fuelhome + train_data$norm_linguistic + train_data$norm_rooms)
+y_hat_v1 <- fitted.values(model_ols_v1)
+mean(y_hat_v1[cl_data_n1 == 1])
+mean(y_hat_v1[cl_data_n1 == 0])
+cl_data_n1 <- as.numeric(cl_data_n == 2)
+
+model_ols_v1 <- lm(cl_data_n1 ~ train_data$norm_poverty + train_data$norm_inc_tot + train_data$norm_famsize + train_data$norm_migration + train_data$norm_rent + train_data$norm_cost_electricity
+                  + train_data$norm_cost_gas + train_data$norm_cost_water + train_data$norm_cost_fuelhome + train_data$norm_linguistic + train_data$norm_rooms)
+y_hat_v1 <- fitted.values(model_ols_v1)
+mean(y_hat_v1[cl_data_n1 == 1])
+mean(y_hat_v1[cl_data_n1 == 0])
+Plot(model_ols_v1)
